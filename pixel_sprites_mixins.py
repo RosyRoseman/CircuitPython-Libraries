@@ -1,7 +1,9 @@
 """ BEHAVIOURS """
 class SinglePixel(object):
     def __init__(self, **kwargs):
-        if self.tocks is None: self.tocks = len(self.page)
+        length = self.end_location - self.start_location
+        if length < 0: length = -length
+        if self.tocks is None: self.tocks = length + 1
         if type(self.color[0]) is tuple:
             print("Initializing:  <class 'SinglePixel'> as Pallette")
             self.type = 'pallette'
@@ -9,23 +11,25 @@ class SinglePixel(object):
             print("Initializing:  <class 'SinglePixel'> as Mono")
             self.type = 'mono'
     def update_sprite(self):
-        if tock != last_tock:
-            self.release_pixel(self.location+self.tail)
+        if self.tock != self.last_tock:
+            self.release_pixel(self.location, mod=self.tail)
             if self.type == 'pallette': self.set_pixel(self.location, self.color[self.location])
             if self.type == 'mono': self.set_pixel(self.location, self.color)
-            self.location += self.nose
+            self.loc_inc()
         return True
 
 class SingleWave(object):
     def __init__(self, **kwargs):
-        if self.tocks is None: self.tocks = len(self.page) + 3 # add splay here, gonna be weird with odd/even splay
+        length = self.end_location - self.start_location
+        if length < 0: length = -length
+        if self.tocks is None: self.tocks = length + 4 # add splay here, gonna be weird with odd/even splay
     def update_sprite(self):
-        self.set_pixel(self.location+self.nose, self.color[self.tick])
-        if not self.fill: self.set_pixel(self.location+self.tail, self.color[self.ticks - self.tick])
+        self.set_pixel(self.location, self.color[self.tick], mod=self.nose)
+        self.set_pixel(self.location, self.color[-1])
+        self.set_pixel(self.location, self.color[self.ticks - self.tick], mod=self.tail)
         if self.tock != self.last_tock:
-            if not self.fill: self.release_pixel(self.location+self.tail)
-            self.location += self.nose
-            self.set_pixel(self.location, self.color[-1])
+            self.release_pixel(self.location, mod=self.tail)
+            self.loc_inc()
         return True
 
 """Directions"""
@@ -38,21 +42,16 @@ class Plus(object):
         self.location = self.start_location
         self.nose = 1
         self.tail = -1
-    def set_pixel(self, location, color):
-        try:
-            if self.end_location >= location and self.start_location <= location:
-                self.page[location] = color
-        except:
-            pass
-    def release_pixel(self, location):
-        try:
-            if self.end_location >= location and self.start_location <= location:
-                self.page[location] = 0
-        except: pass
+    def set_pixel(self, location, color, mod=0):
+        location += mod
+        if self.end_location >= location and self.start_location <= location: self.page[location] = color
+    def release_pixel(self, location, mod=0):
+        location += mod
+        if self.end_location >= location and self.start_location <= location: self.page[location] = 0
+    def loc_inc(self):
+        self.location += 1
     def done(self):
-        if self.location > self.end_location:
-            self.end()
-            return True
+        if self.location > self.end_location: self.end(); return True
 class Minus(object):
     def __init__(self, **kwargs):
         if kwargs['start_location'] is None: self.start_location = len(self.page) - 1
@@ -62,20 +61,75 @@ class Minus(object):
         self.location = self.start_location
         self.nose = -1
         self.tail = 1
-    def set_pixel(self, location, color):
-        try:
-            if self.end_location <= location and self.start_location >= location:
-                self.page[location] = color
-        except: pass
-    def release_pixel(self, location):
-        try:
-            if self.end_location <= location and self.start_location >= location:
-                self.page[location] = 0
-        except: pass
+    def set_pixel(self, location, color, mod=0):
+        location += mod
+        if self.end_location <= location and self.start_location >= location: self.page[location] = color
+    def release_pixel(self, location, mod=0):
+        location += mod
+        if self.end_location <= location and self.start_location >= location: self.page[location] = 0
+    def loc_inc(self):
+        self.location -= 1
     def done(self):
-        if self.location < self.end_location:
-            self.end()
-            return True
+        if self.location < self.end_location: self.end(); return True
+class MirrorIn(object):
+    def __init__(self, **kwargs):
+        self.start_location = 0
+        self.start_location_ = len(self.page)-1
+        self.end_location_ = int(len(self.page)/2)
+        self.end_location = int(len(self.page)/2) - 1
+        self.location = self.start_location
+        self.location_ = self.start_location_
+        self.nose = 1
+        self.tail = -1
+    def set_pixel(self, location, color, mod=0):
+        location += mod
+        location_ = self.location_ - mod
+        if self.end_location >= location and self.start_location <= location:
+            self.page[location] = color
+        if self.end_location_ <= location_ and self.start_location_ >= location_:
+            self.page[location_] = color
+    def release_pixel(self, location, mod=0):
+        location += mod
+        location_ = self.location_ - mod
+        if self.end_location >= location and self.start_location <= location:
+            self.page[location] = 0
+        if self.end_location_ <= location_ and self.start_location_ >= location_:
+            self.page[location_] = 0
+    def loc_inc(self):
+        self.location += 1
+        self.location_ -= 1
+    def done(self):
+        if self.location > self.end_location: self.end(); return True
+class MirrorOut(object):
+    def __init__(self, **kwargs):
+        self.start_location = int(len(self.page)/2) - 1
+        self.start_location_ = int(len(self.page)/2)
+        self.end_location_ = len(self.page)-1
+        self.end_location = 0
+        self.location = self.start_location
+        self.location_ = self.start_location_
+        self.nose = -1
+        self.tail = 1
+        print("start:{},end:{},start_:{},end_:{}".format(self.start_location, self.end_location, self.start_location_, self.end_location_))
+    def set_pixel(self, location, color, mod=0):
+        location += mod
+        location_ = self.location_ - mod
+        if self.end_location <= location and self.start_location >= location:
+            self.page[location] = color
+        if self.end_location_ >= location_ and self.start_location_ <= location_:
+            self.page[location_] = color
+    def release_pixel(self, location, mod=0):
+        location += mod
+        location_ = self.location_ - mod
+        if self.end_location <= location and self.start_location >= location:
+            self.page[location] = 0
+        if self.end_location_ >= location_ and self.start_location_ <= location_:
+            self.page[location_] = 0
+    def loc_inc(self):
+        self.location -= 1
+        self.location_ += 1
+    def done(self):
+        if self.location < self.end_location: self.end(); return True
 """ RESOLVING FUNCTIONS """
 class Terminate(object):
     def __init__(self, **kwargs):
@@ -98,7 +152,7 @@ class Rebound(Terminate): # add echo functionality here and repeat ergo each pas
         if self.debugging:
             for each in self.variables:
                 print(each, self.variables[each])
-        Terminate.resolve(self)
+        super().resolve_self()
         return self.variables
 
 class Repeat(Terminate):
@@ -109,5 +163,5 @@ class Repeat(Terminate):
             print("Trying to resolve-Repeat: ")
             for each in self.variables:
                 print(each, " :: ", self.variables[each])
-        Terminate.resolve(self)
+        super().resolve_self()
         return self.variables

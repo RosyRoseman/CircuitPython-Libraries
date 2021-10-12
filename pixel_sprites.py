@@ -4,7 +4,7 @@ import gc
 from pixel_sprites_mixins import *
 
 def build_sprite(direction=Plus, resolve=Terminate, behaviour=None, **kwargs):
-    class Sprite(behaviour, direction, resolve,):
+    class Sprite(direction, behaviour, resolve,):
         def __init__(self,
                     color=(0,10,10),
                     page=None,
@@ -32,7 +32,7 @@ def build_sprite(direction=Plus, resolve=Terminate, behaviour=None, **kwargs):
             self.tick = 0
             self.tock = 0
             self.last_tick = self.tick
-            self.last_tock = self.tock
+            self.last_tock = self.tock -1
             self.echo = echo
             self.echo_changes = echo_changes # {'color':[pallette, pallette, pallette], 'duration':[4,2,2]}
             self.start_time = start_time
