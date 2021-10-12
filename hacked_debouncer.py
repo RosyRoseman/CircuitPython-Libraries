@@ -1,3 +1,11 @@
+"""
+Example Call
+buttons = {'silver':board.A0, 'blue':board.A1, 'red':board.A2}
+for key in buttons: buttons[key] = Debouncer(buttons[key])
+while True:
+    for key in buttons: buttons[key].update()
+"""
+
 import time
 import board
 from micropython import const
