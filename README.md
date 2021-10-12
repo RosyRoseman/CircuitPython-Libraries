@@ -13,3 +13,6 @@ Class Sprite allows for complex patterns to be built with layers using simple co
 ## pixel_sprites_mixins.py
 library of inheritance options for Sprites
 includes directions (plus, minus) behaviours (single pixel, pixel wave) and resolutions (rebound, repeat, terminate)
+
+## color_pallette.py
+simple implimentation to create rgb/rgbw arrays of tuples
